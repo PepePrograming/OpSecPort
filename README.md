@@ -18,6 +18,7 @@
 
 > [!WARNING]
 > This is a passion project built and maintained with **AI**.
+> Since the entire project was vibecoded I dont feel like unvibecoding this :P
 
 > [!IMPORTANT]
 > Fake phishing sites and Discord servers has been distributing **trojanized** builds of OpSec. Only download OpSec from these official sources:
