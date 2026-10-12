@@ -6,7 +6,6 @@ import aurick.opsec.mod.mixin.client.MinecraftAccessor;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.minecraft.UserApiService;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.multiplayer.ProfileKeyPairManager;
@@ -342,8 +341,13 @@ public class SessionAccount implements Account {
             // Set the new user/session
             accessor.opsec$setUser(newUser);
             
-            // Reinitialize authentication services
-            YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(mc.getProxy());
+            // Reinitialize authentication services. Authlib 10 (MC 26.3) removed
+            // YggdrasilAuthenticationService in favor of the discovery service.
+            //? if >=26.3 {
+            /*var authService = com.mojang.authlib.services.MinecraftServicesDiscoveryService.create(mc.getProxy());*/
+            //?} else {
+            var authService = new com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService(mc.getProxy());
+            //?}
             
             // Reinitialize user API service (needed for chat signing)
             UserApiService userApiService = authService.createUserApiService(accessToken);
@@ -359,7 +363,7 @@ public class SessionAccount implements Account {
             
             // Reinitialize social manager
             //? if >=26.2 {
-            /*com.mojang.authlib.yggdrasil.FriendsService friendsService = authService.createFriendsService(accessToken);
+            /*var friendsService = authService.createFriendsService(accessToken);
             net.minecraft.client.gui.screens.social.RemoteFriendListUpdateHandler updateHandler =
                     new net.minecraft.client.gui.screens.social.RemoteFriendListUpdateHandler(friendsService, mc);
             PlayerSocialManager socialManager = new PlayerSocialManager(mc, userApiService, friendsService, updateHandler);*/

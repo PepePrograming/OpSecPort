@@ -8,11 +8,11 @@
 
 <p align="center">
 <a href="https://modrinth.com/mod/opsec"><img alt="Modrinth Downloads" src="https://img.shields.io/modrinth/dt/opsec?logo=modrinth&logoColor=white&label=Modrinth&color=00AF5C"></a>
-<a href="https://modrinth.com/mod/opsec/versions"><img alt="Supported Minecraft Versions" src="https://img.shields.io/badge/Available%20for-1.20%20%E2%80%93%2026.2-00AF5C"></a>
+<a href="https://modrinth.com/mod/opsec/versions"><img alt="Supported Minecraft Versions" src="https://img.shields.io/badge/Available%20for-1.20%20%E2%80%93%2026.3-00AF5C"></a>
 <a href="https://www.curseforge.com/minecraft/mc-mods/opsec"><img alt="CurseForge Downloads" src="https://img.shields.io/curseforge/dt/1519411?logo=curseforge&logoColor=white&label=Curseforge&color=F16436"></a>
-<a href="https://www.curseforge.com/minecraft/mc-mods/opsec"><img alt="Supported Minecraft Versions" src="https://img.shields.io/badge/Available%20for-1.20%20%E2%80%93%2026.2-F16436"></a>
-<a href="https://github.com/aurickk/OpSec/releases"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/aurickk/OpSec/total?logo=github&logoColor=white&label=GitHub&color=6e5494"></a>
-<a href="https://github.com/aurickk/OpSec/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/aurickk/OpSec?logo=github&logoColor=white&label=Release&color=6e5494"></a>
+<a href="https://www.curseforge.com/minecraft/mc-mods/opsec"><img alt="Supported Minecraft Versions" src="https://img.shields.io/badge/Available%20for-1.20%20%E2%80%93%2026.3-F16436"></a>
+<a href="https://github.com/PepePrograming/OpSecPort/releases"><img alt="GitHub Downloads" src="https://img.shields.io/github/downloads/PepePrograming/OpSecPort/total?logo=github&logoColor=white&label=GitHub&color=6e5494"></a>
+<a href="https://github.com/PepePrograming/OpSecPort/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/PepePrograming/OpSecPort?logo=github&logoColor=white&label=Release&color=6e5494"></a>
 </p>
 
 
@@ -22,7 +22,7 @@
 > [!IMPORTANT]
 > Fake phishing sites and Discord servers has been distributing **trojanized** builds of OpSec. Only download OpSec from these official sources:
 > - **[Modrinth](https://modrinth.com/mod/opsec)**
-> - **[GitHub Releases](https://github.com/aurickk/OpSec/releases)**
+> - **[GitHub Releases](https://github.com/PepePrograming/OpSecPort/releases)**
 > - **[CurseForge](https://www.curseforge.com/minecraft/mc-mods/opsec)** (updated less frequently)
 >
 > Builds from anywhere else are not official and may be malicious.
@@ -47,15 +47,18 @@
 
 ## Requirements
 
-- **Minecraft** 1.20 – 26.2
-- **Fabric Loader** 0.16.0+ (0.18.5+ for MC 26.1.x)
+- **Minecraft** 1.20 – 26.3
+- **Fabric Loader** 0.16.0+ (0.18.5+ for MC 26.1.x, 0.19.5+ for MC 26.3)
 - **Fabric API** (matching your Minecraft version)
+
+> [!NOTE]
+> Minecraft 26.3 replaces GLFW with SDL and substantially changes server resource-pack composition. On the 26.3 build, account import/export uses `config/opsec-accounts-import.json` and `config/opsec-accounts-export.json` instead of a native file picker. Server-pack bypass and mod-shader stripping remain disabled until the new pack-resource pipeline can be validated against a live server push.
 
 ### Installation
 
 1. Install [Fabric Loader](https://fabricmc.net/use/) for your Minecraft version
 2. Download the latest [Fabric API](https://modrinth.com/mod/fabric-api) for your Minecraft version
-3. Download the latest `opsec-[minecraft_version]+[version].jar` from the [Releases](https://github.com/aurickk/OpSec/releases/) page
+3. Download the latest `opsec-[minecraft_version]+[version].jar` from the [Releases](https://github.com/PepePrograming/OpSecPort/releases/) page
 4. Place both mods in your `.minecraft/mods` folder
 5. Launch Minecraft
 
@@ -362,17 +365,17 @@ OpSec blocks telemetry sending to Mojang when telemetry blocking is enabled. Doe
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/aurickk/OpSec.git
-   cd OpSec
+   git clone https://github.com/PepePrograming/OpSecPort.git
+   cd OpSecPort
    ```
 
 2. **Build all versions**
    ```bash
    # Windows
-   .\gradlew.bat build
+   .\gradlew.bat buildAll
    
    # Linux/Mac
-   ./gradlew build
+   ./gradlew buildAll
    ```
 
 3. **Build a specific version**
@@ -389,6 +392,7 @@ OpSec blocks telemetry sending to Mojang when telemetry blocking is enabled. Doe
    ./gradlew :1.21.11:build
    ./gradlew :26.1:build
    ./gradlew :26.2:build
+   ./gradlew :26.3:build
    ```
 
 Output JARs are located in `versions/<minecraft_version>/build/libs/`:
@@ -405,6 +409,7 @@ Output JARs are located in `versions/<minecraft_version>/build/libs/`:
 | 1.21.11 | 1.21.11 |
 | 26.1 | 26.1 – 26.1.2 |
 | 26.2 | 26.2 |
+| 26.3 | 26.3 |
 
 
 ## References

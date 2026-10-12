@@ -38,13 +38,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
+//? if <26.3 {
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
+//?}
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -64,6 +67,38 @@ public class OpsecConfigScreen extends Screen {
     private static volatile boolean isLoggingOut = false;
     // Animation ticks for loading indicators - volatile for thread safety
     private static volatile int animationTicks = 0;
+
+    // MC 26.3 moved window/input handling from GLFW to SDL. Keep the raw polling
+    // used by the custom widgets behind one version-scoped helper.
+    //? if >=26.3 {
+    /*private static boolean opsec$isLeftMouseButtonDown() {
+        return (org.lwjgl.sdl.SDLMouse.SDL_GetMouseState(null, null)
+                & org.lwjgl.sdl.SDLMouse.SDL_BUTTON_LMASK) != 0;
+    }
+
+    private static double[] opsec$getCursorPos() {
+        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            java.nio.FloatBuffer x = stack.mallocFloat(1);
+            java.nio.FloatBuffer y = stack.mallocFloat(1);
+            org.lwjgl.sdl.SDLMouse.SDL_GetMouseState(x, y);
+            return new double[]{x.get(0), y.get(0)};
+        }
+    }*/
+    //?} else {
+    private static boolean opsec$isLeftMouseButtonDown() {
+        long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+        return org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle,
+                org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+    }
+
+    private static double[] opsec$getCursorPos() {
+        long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+        double[] x = new double[1];
+        double[] y = new double[1];
+        org.lwjgl.glfw.GLFW.glfwGetCursorPos(windowHandle, x, y);
+        return new double[]{x[0], y[0]};
+    }
+    //?}
     
     // Helper method to create CycleButton builder with values in correct order
     // API changed in 1.21.11 - builder() now requires a default value parameter and doesn't have withInitialValue()
@@ -604,7 +639,17 @@ public class OpsecConfigScreen extends Screen {
     
     private void openImportDialog() {
         new Thread(() -> {
-            try (MemoryStack stack = MemoryStack.stackPush()) {
+            try {
+                //? if >=26.3 {
+                /*Path file = Minecraft.getInstance().gameDirectory.toPath()
+                        .resolve("config").resolve("opsec-accounts-import.json");
+                if (!Files.exists(file)) {
+                    Opsec.LOGGER.warn("[OpSec] Import file not found: {}", file);
+                    return;
+                }*/
+                //?} else {
+                Path file;
+                try (MemoryStack stack = MemoryStack.stackPush()) {
                 PointerBuffer filters = stack.mallocPointer(1);
                 filters.put(stack.UTF8("*.json"));
                 filters.flip();
@@ -619,14 +664,16 @@ public class OpsecConfigScreen extends Screen {
                 
                 if (result == null) return;
                 
-                File file = new File(result);
-                String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+                file = new File(result).toPath();
+                }
+                //?}
+                String content = Files.readString(file, StandardCharsets.UTF_8);
                 int imported = AccountManager.getInstance().importFromJson(content);
                 
                 // Refresh UI on main thread
                 Minecraft.getInstance().execute(() -> {
                     if (imported > 0) {
-                        Opsec.LOGGER.info("[OpSec] Imported {} accounts from {}", imported, file.getName());
+                        Opsec.LOGGER.info("[OpSec] Imported {} accounts from {}", imported, file.getFileName());
                     }
                     refreshScreen();
                 });
@@ -638,7 +685,14 @@ public class OpsecConfigScreen extends Screen {
     
     private void openExportDialog() {
         new Thread(() -> {
-            try (MemoryStack stack = MemoryStack.stackPush()) {
+            try {
+                //? if >=26.3 {
+                /*Path file = Minecraft.getInstance().gameDirectory.toPath()
+                        .resolve("config").resolve("opsec-accounts-export.json");
+                Files.createDirectories(file.getParent());*/
+                //?} else {
+                Path file;
+                try (MemoryStack stack = MemoryStack.stackPush()) {
                 PointerBuffer filters = stack.mallocPointer(1);
                 filters.put(stack.UTF8("*.json"));
                 filters.flip();
@@ -652,16 +706,19 @@ public class OpsecConfigScreen extends Screen {
                 
                 if (result == null) return;
                 
-                File file = new File(result);
-                if (!file.getName().toLowerCase().endsWith(".json")) {
-                    file = new File(file.getParentFile(), file.getName() + ".json");
+                File selectedFile = new File(result);
+                if (!selectedFile.getName().toLowerCase().endsWith(".json")) {
+                    selectedFile = new File(selectedFile.getParentFile(), selectedFile.getName() + ".json");
                 }
+                file = selectedFile.toPath();
+                }
+                //?}
                 
                 String json = AccountManager.getInstance().exportToJson();
-                Files.write(file.toPath(), json.getBytes(StandardCharsets.UTF_8),
+                Files.write(file, json.getBytes(StandardCharsets.UTF_8),
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                     
-                Opsec.LOGGER.info("[OpSec] Exported accounts to {}", file.getPath());
+                Opsec.LOGGER.info("[OpSec] Exported accounts to {}", file);
             } catch (Exception e) {
                 Opsec.LOGGER.error("[OpSec] Failed to export accounts: {}", e.getMessage());
             }
@@ -724,8 +781,7 @@ public class OpsecConfigScreen extends Screen {
             removeButton.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -745,8 +801,7 @@ public class OpsecConfigScreen extends Screen {
             removeButton.render(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -845,8 +900,7 @@ public class OpsecConfigScreen extends Screen {
             exportButton.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -865,8 +919,7 @@ public class OpsecConfigScreen extends Screen {
             exportButton.render(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -964,8 +1017,7 @@ public class OpsecConfigScreen extends Screen {
             disableAllButton.extractRenderState(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -987,8 +1039,7 @@ public class OpsecConfigScreen extends Screen {
             disableAllButton.render(graphics, mouseX, mouseY, partialTick);
 
             // Poll mouse state for click detection since mouseClicked API changed
-            long windowHandle = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-            boolean isMouseDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            boolean isMouseDown = opsec$isLeftMouseButtonDown();
 
             if (!isMouseDown && wasMouseDown) {
                 // Mouse was just released
@@ -1326,14 +1377,12 @@ public class OpsecConfigScreen extends Screen {
 
     private void pollVersionLabelClick() {
         if (!versionOutdated || versionLabel == null) return;
-        long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
-        boolean isDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(window, org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        boolean isDown = opsec$isLeftMouseButtonDown();
         if (!isDown && versionLabelMouseWasDown) {
-            double[] mx = new double[1], my = new double[1];
-            org.lwjgl.glfw.GLFW.glfwGetCursorPos(window, mx, my);
+            double[] cursor = opsec$getCursorPos();
             double scale = this.minecraft.getWindow().getGuiScale();
-            double guiX = mx[0] / scale;
-            double guiY = my[0] / scale;
+            double guiX = cursor[0] / scale;
+            double guiY = cursor[1] / scale;
             if (isOverVersionLabel(guiX, guiY)) {
                 openReleaseUrl();
             }
@@ -1343,11 +1392,7 @@ public class OpsecConfigScreen extends Screen {
 
     private void openReleaseUrl() {
         try {
-            //? if >=1.21.11 {
-            /*net.minecraft.util.Util.getPlatform().openUri(UpdateChecker.getReleaseUrl());*/
-            //?} else {
-            net.minecraft.Util.getPlatform().openUri(UpdateChecker.getReleaseUrl());
-            //?}
+            java.awt.Desktop.getDesktop().browse(java.net.URI.create(UpdateChecker.getReleaseUrl()));
         } catch (Exception e) {
             Opsec.LOGGER.warn("[OpSec] Failed to open release URL: {}", e.getMessage());
         }

@@ -80,7 +80,13 @@ public class CrackedAccount implements Account {
             accessor.opsec$setProfileKeyPairManager(profileKeyPairManager);
 
             // Create social manager with offline service
-            //? if >=26.2 {
+            //? if >=26.3 {
+            /*var authService = com.mojang.authlib.services.MinecraftServicesDiscoveryService.create(mc.getProxy());
+            var friendsService = authService.createFriendsService("");
+            net.minecraft.client.gui.screens.social.RemoteFriendListUpdateHandler updateHandler =
+                    new net.minecraft.client.gui.screens.social.RemoteFriendListUpdateHandler(friendsService, mc);
+            PlayerSocialManager socialManager = new PlayerSocialManager(mc, UserApiService.OFFLINE, friendsService, updateHandler);*/
+            //?} else if >=26.2 {
             /*com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService authService =
                     new com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService(mc.getProxy());
             com.mojang.authlib.yggdrasil.FriendsService friendsService = authService.createFriendsService("");

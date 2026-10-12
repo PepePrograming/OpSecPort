@@ -9,12 +9,6 @@ import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-//? if >=1.21.11 {
-/*import net.minecraft.util.Util;*/
-//?} else {
-import net.minecraft.Util;
-//?}
-
 /**
  * Warning screen displayed when the running jar's SHA-256 does not match the
  * official GitHub release asset. Shows expected vs actual hashes and offers
@@ -71,7 +65,7 @@ public class TamperWarningScreen extends Screen {
 
         // Buttons stacked vertically, centered horizontally
         this.addRenderableWidget(Button.builder(Component.literal(OpsecLang.tr(OpsecStrings.TAMPER_DOWNLOAD)), button -> {
-            Util.getPlatform().openUri(UpdateChecker.getReleaseUrl());
+            openReleaseUrl();
             this.onClose();
         }).bounds(centerX - buttonWidth / 2, y, buttonWidth, buttonHeight).build());
 
@@ -85,6 +79,13 @@ public class TamperWarningScreen extends Screen {
     private void addCenteredStringWidget(Component text, int centerX, int y) {
         int textWidth = this.font.width(text);
         this.addRenderableWidget(new StringWidget(centerX - textWidth / 2, y, textWidth, 10, text, this.font));
+    }
+
+    private void openReleaseUrl() {
+        try {
+            java.awt.Desktop.getDesktop().browse(java.net.URI.create(UpdateChecker.getReleaseUrl()));
+        } catch (Exception ignored) {
+        }
     }
 
     /**

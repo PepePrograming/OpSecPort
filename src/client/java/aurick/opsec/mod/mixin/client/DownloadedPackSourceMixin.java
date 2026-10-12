@@ -1,6 +1,18 @@
 package aurick.opsec.mod.mixin.client;
 
-//? if >=1.20.5 {
+//? if >=26.3 {
+/*// Minecraft 26.3 replaced FileResourcesSupplier.openPrimary/openFull with
+// openMetadata/openResources and changed pack composition to multiple resources.
+// Keep this mixin disabled until the new resource model can be tested against a
+// real server-pushed pack; the rest of OpSec remains active on 26.3.
+import net.minecraft.client.resources.server.DownloadedPackSource;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(DownloadedPackSource.class)
+public abstract class DownloadedPackSourceMixin {
+}
+*/
+//?} elif >=1.20.5 {
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;

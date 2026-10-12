@@ -20,7 +20,7 @@
 		"JoinMultiplayerScreenMixin",
 		"MinecraftAccessor",
 		"MinecraftMixin",
-		"YggdrasilUserApiServiceMixin",
+		${yggdrasil_user_api_service_mixin_entry}
 		"ChatOptionsScreenMixin",
 		"ServerboundChatPacketMixin",
 		"HttpUtilMixin",

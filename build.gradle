@@ -41,6 +41,11 @@ def knownPacksMixinEntry = hasKnownPacksManager ? '\n\t\t"KnownPacksManagerMixin
 def hasPayloadTypeRegistry = isAtLeast(minecraft_version.toString(), "1.20.5")
 def payloadTypeRegistryMixinEntry = hasPayloadTypeRegistry ? '\n\t\t"PayloadTypeRegistryImplMixin",\n\t\t"AbstractChanneledNetworkAddonMixin",' : ''
 
+// Authlib 10 (MC 26.3) removed YggdrasilUserApiService. Keep the telemetry
+// mixin registered only for targets where that class still exists.
+def hasYggdrasilUserApiService = !isAtLeast(minecraft_version.toString(), "26.3")
+def yggdrasilUserApiServiceMixinEntry = hasYggdrasilUserApiService ? '\n\t\t"YggdrasilUserApiServiceMixin",' : ''
+
 // Apply the correct Loom plugin variant per version target:
 // - net.fabricmc.fabric-loom (non-remap) for unobfuscated MC 26.1+
 // - fabric-loom (legacy/remap) for obfuscated MC <=1.21.11
@@ -138,6 +143,7 @@ tasks.withType(ProcessResources).configureEach {
     inputs.property("java_version", javaVersion.toString())
     inputs.property("known_packs_mixin_entry", knownPacksMixinEntry)
     inputs.property("payload_type_registry_mixin_entry", payloadTypeRegistryMixinEntry)
+    inputs.property("yggdrasil_user_api_service_mixin_entry", yggdrasilUserApiServiceMixinEntry)
     filesMatching(["fabric.mod.json", "opsec.client.mixins.json"]) {
         expand(
             "version": project.version,
@@ -145,7 +151,8 @@ tasks.withType(ProcessResources).configureEach {
             "mixin_compat_level": mixinCompatLevel,
             "java_version": javaVersion.toString(),
             "known_packs_mixin_entry": knownPacksMixinEntry,
-            "payload_type_registry_mixin_entry": payloadTypeRegistryMixinEntry
+            "payload_type_registry_mixin_entry": payloadTypeRegistryMixinEntry,
+            "yggdrasil_user_api_service_mixin_entry": yggdrasilUserApiServiceMixinEntry
         )
     }
 }

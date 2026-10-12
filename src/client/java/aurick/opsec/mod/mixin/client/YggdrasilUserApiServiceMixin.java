@@ -3,7 +3,6 @@ package aurick.opsec.mod.mixin.client;
 import aurick.opsec.mod.Opsec;
 import aurick.opsec.mod.config.OpsecConfig;
 import com.mojang.authlib.minecraft.TelemetrySession;
-import com.mojang.authlib.yggdrasil.YggdrasilUserApiService;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,7 +19,7 @@ import java.util.concurrent.Executor;
  * Based on No Chat Reports by Aizistral-Studios:
  * https://github.com/Aizistral-Studios/No-Chat-Reports
  */
-@Mixin(value = YggdrasilUserApiService.class, remap = false)
+@Mixin(targets = "com.mojang.authlib.yggdrasil.YggdrasilUserApiService", remap = false)
 public class YggdrasilUserApiServiceMixin {
     
     /**
