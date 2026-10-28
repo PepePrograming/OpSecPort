@@ -16,6 +16,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.time.Instant;
+//? if >=26.3 {
+/*
+import java.util.Optional;
+*/
+//?}
 
 /**
  * Strips signatures from outbound chat packets when the user has signing
@@ -24,15 +29,36 @@ import java.time.Instant;
 @Mixin(ServerboundChatPacket.class)
 public class ServerboundChatPacketMixin {
     
+    //? if >=26.3 {
+    /*
+    @Final
+    @Mutable
+    @Shadow
+    private Optional<MessageSignature> signature;
+    */
+    //?} else {
     @Final
     @Nullable
     @Mutable
     @Shadow
     private MessageSignature signature;
+    //?}
     
     /**
      * Strip signature from packet on construction when signing is OFF.
      */
+    //? if >=26.3 {
+    /*
+    @Inject(method = "<init>(Ljava/lang/String;Ljava/time/Instant;JLjava/util/Optional;Lnet/minecraft/network/chat/LastSeenMessages$Update;)V", at = @At("TAIL"))
+    private void opsec$stripSignatureOnInit(String message, Instant timeStamp, long salt,
+            Optional<MessageSignature> signature, LastSeenMessages.Update lastSeenMessages, CallbackInfo ci) {
+        if (OpsecConfig.getInstance().shouldNotSign()) {
+            Opsec.LOGGER.debug("[OpSec] signing OFF —stripping chat signature");
+            this.signature = Optional.empty();
+        }
+    }
+    */
+    //?} else {
     @Inject(method = "<init>(Ljava/lang/String;Ljava/time/Instant;JLnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/network/chat/LastSeenMessages$Update;)V", at = @At("TAIL"))
     private void opsec$stripSignatureOnInit(String message, Instant timeStamp, long salt, 
             MessageSignature signature, LastSeenMessages.Update lastSeenMessages, CallbackInfo ci) {
@@ -41,10 +67,22 @@ public class ServerboundChatPacketMixin {
             this.signature = null;
         }
     }
+    //?}
     
     /**
      * Return null from the signature accessor when signing is OFF.
      */
+    //? if >=26.3 {
+    /*
+    @Inject(method = "signature", at = @At("HEAD"), cancellable = true)
+    private void opsec$stripSignatureOnGet(CallbackInfoReturnable<Optional<MessageSignature>> info) {
+        if (OpsecConfig.getInstance().shouldNotSign()) {
+            Opsec.LOGGER.debug("[OpSec] signing OFF —returning empty signature");
+            info.setReturnValue(Optional.empty());
+        }
+    }
+    */
+    //?} else {
     @Inject(method = "signature", at = @At("HEAD"), cancellable = true)
     private void opsec$stripSignatureOnGet(CallbackInfoReturnable<MessageSignature> info) {
         if (OpsecConfig.getInstance().shouldNotSign()) {
@@ -52,5 +90,6 @@ public class ServerboundChatPacketMixin {
             info.setReturnValue(null);
         }
     }
+    //?}
 }
 
