@@ -167,12 +167,6 @@ java {
     targetCompatibility = JavaVersion.toVersion(javaVersion)
 }
 
-// The raw metadata template contains unresolved placeholders and makes a
-// sources archive appear to Fabric as an incompatible mod if installed.
-tasks.named("sourcesJar") {
-    exclude("fabric.mod.json")
-}
-
 tasks.jar {
     from("LICENSE") {
         rename { "${it}_${base.archivesName.get()}" }

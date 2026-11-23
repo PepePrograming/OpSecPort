@@ -96,12 +96,9 @@ public class ClientLanguageMixin {
             @Local Resource resource) {
         
         PackResources pack = resource.source();
-        String sourcePackId = pack.packId();
         
-        // Vanilla pack - always whitelist. Newer Minecraft releases may wrap
-        // the built-in pack in a different PackResources implementation, so
-        // keep recognizing it by its stable pack ID as well.
-        if (pack instanceof VanillaPackResources || "vanilla".equals(sourcePackId)) {
+        // Vanilla pack - always whitelist
+        if (pack instanceof VanillaPackResources) {
             original.call(stream, (BiConsumer<String, String>) (key, value) -> {
                 ModRegistry.recordVanillaTranslationKey(key);
                 output.accept(key, value);
@@ -128,7 +125,7 @@ public class ClientLanguageMixin {
         
         // Apply ALL pack entries including overrides of vanilla keys (commit 0065b2e) —
         // a vanilla client resolves poisoned keys to the pack value, so we must too.
-        String serverPackId = sourcePackId;
+        String serverPackId = pack.packId();
         if (opsec$isServerPackId(serverPackId)) {
             Set<String> serverKeys = new HashSet<>();
             original.call(stream, (BiConsumer<String, String>) (key, value) -> {
@@ -146,7 +143,7 @@ public class ClientLanguageMixin {
         // Path pack resources - try to extract mod ID from pack ID as fallback
         if (pack instanceof PathPackResources) {
             // Try to get mod ID from pack ID (format is usually "mod_id" or similar)
-            String packId = sourcePackId;
+            String packId = pack.packId();
             if (packId != null && !packId.isEmpty() && !packId.equals("vanilla")
                     && !packId.startsWith("file/") && !opsec$isServerPackId(packId)) {
                 // Clean up pack ID - remove common prefixes/suffixes

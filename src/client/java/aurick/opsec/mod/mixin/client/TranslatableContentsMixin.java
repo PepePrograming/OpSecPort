@@ -110,14 +110,13 @@ public abstract class TranslatableContentsMixin implements OpsecFromPacketAccess
             return OPSEC_ALLOW_ORIGINAL;
         }
 
+        // In exploit context — always notify header (cooldown prevents spam)
+        TranslationProtectionHandler.notifyExploitDetected();
+
         if (ModRegistry.isVanillaTranslationKey(translationKey)) {
             opsec$reportPassthrough(translationKey, defaultValue);
             return OPSEC_ALLOW_ORIGINAL;
         }
-
-        // Only non-vanilla packet keys can be probes. Do this after the vanilla
-        // check so ordinary server messages don't leave a pending false alert.
-        TranslationProtectionHandler.notifyExploitDetected();
 
         OpsecConfig config = OpsecConfig.getInstance();
         SpoofSettings settings = config.getSettings();
